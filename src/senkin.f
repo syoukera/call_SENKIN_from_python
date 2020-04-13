@@ -431,6 +431,11 @@ C
 C
       DATA ISEN /5*0/, INFO /15*0/, DTLIM / 400. /, NOSAV /1/
 C
+C       SET OUTPUT FILE FOR USER COMFORMATION
+C
+      LDTS = 11
+      OPEN (LDTS, FORM='FORMATTED', FILE = 'output/skout_datasheet')
+C
 C       SET PARAMETERS FOR DASAC
 C
       INFO(3) = 1
@@ -480,6 +485,11 @@ C
       WRITE (LIGN, '(//A/)') '  Time Integration:'
       CALL TEXT13 (IPAR, KK, KSYM, LIGN, LOUT,
      1             P, PATM, RPAR, TIM, XMOL, Z)
+      WRITE (LDTS, 7720)
+      WRITE (LDTS, *) (KSYM(I), I = 1, KK)
+      CALL TEXT13DTS (IPAR, KK, KSYM, LDTS,
+     1             P, PATM, RPAR, TIM, XMOL, Z)
+ 7720 FORMAT(/,' t(sec)     P(atm)     T(K)    ', $)
 C
 C       A variable used for sensitivity analysis. Z(ls,J) --> ls = 1: temperature, ls = 2...NSYS: species
 C
@@ -538,6 +548,8 @@ C           PRINT OUT SOLUTION
 C
       IF (TIM .GE. TPRINT) THEN
          CALL TEXT13 (IPAR, KK, KSYM, LIGN, LOUT,
+     1                P, PATM, RPAR, TIM, XMOL, Z)
+         CALL TEXT13DTS (IPAR, KK, KSYM, LDTS,
      1                P, PATM, RPAR, TIM, XMOL, Z)
          TLASTP = TIM
          TPRINT = TPRINT + DTOUT
@@ -1463,6 +1475,37 @@ C
  7700 FORMAT(/,' t(sec) =',1PE11.4,'   P(atm) =',1PE11.4,
      1'   T(K) =',1PE11.4)
  7710 FORMAT(4(2X,A10,' =',1PE9.2))
+      RETURN
+      END
+C
+C---------------------------------------------------------------
+C
+      SUBROUTINE TEXT13DTS (IPAR, KK, KSYM, LDTS,
+     1                   P, PATM, RPAR, TIM, XMOL, Z)
+C
+C*****precision > double
+      IMPLICIT DOUBLE PRECISION (A-H, O-Z), INTEGER (I-N)
+C*****END precision > double
+C*****precision > single
+C      IMPLICIT REAL (A-H, O-Z), INTEGER (I-N)
+C*****END precision > single
+C
+      DIMENSION Z(*), RPAR(*), IPAR(*), XMOL(*)
+      CHARACTER KSYM(*)*(*)
+C
+C       COMPUTE MOLE FRACTIONS
+C
+      IPRCK  = IPAR(2)
+      IPICK  = IPAR(9)
+      CALL CKYTX (Z(2), IPAR(IPICK), RPAR(IPRCK), XMOL)
+C
+C*****vax vms
+C      WRITE (LOUT, '(1X,A,1PE11.4,3X,A,1PE11.4)')
+C     1 'Time (sec) = ', TIM, 'T (K) = ', Z(1)
+C*****END vax vms
+C
+      PA = P / PATM
+      WRITE (LDTS, *) TIM, PA, Z(1), (XMOL(I), I = 1, KK)
       RETURN
       END
 C
